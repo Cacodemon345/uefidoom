@@ -1,6 +1,7 @@
 # Cacodemon345's UEFI-DOOM (forked from warfish's DOOM repo)
 
 A port of DOOM to UEFI systems.
+Tested with: QEMU with OVMF.
 
 # Building
 Prerequisites:
