@@ -101,7 +101,7 @@ boolean         fastparm;	// checkparm of -fast
 
 boolean         drone;
 
-boolean		singletics =  false; // debug flag to cancel adaptiveness
+boolean		singletics =  true; // debug flag to cancel adaptiveness
 
 
 
@@ -378,6 +378,7 @@ void D_DoomLoop (void)
 	// process one or more tics
 	if (singletics)
 	{
+		usleep((1000 * 1000) / 35);
 	    I_StartTic ();
 	    D_ProcessEvents ();
 	    G_BuildTiccmd (&netcmds[consoleplayer][maketic%BACKUPTICS]);

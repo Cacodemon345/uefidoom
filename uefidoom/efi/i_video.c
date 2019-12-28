@@ -9,6 +9,7 @@
 
 #include <Protocol/GraphicsOutput.h>
 #include <Protocol/SimpleTextIn.h>
+#include <Protocol/SimpleTextInEx.h>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -375,6 +376,7 @@ static int xlatekey(EFI_INPUT_KEY* efiKey)
 		case SCAN_F10:		return KEY_F10;
 		case SCAN_F11:		return KEY_F11;
 		case SCAN_F12:		return KEY_F12;
+		default:			return (char)(efiKey->UnicodeChar & 0xFF);
 		};
 	}
 	else
@@ -384,7 +386,7 @@ static int xlatekey(EFI_INPUT_KEY* efiKey)
 		case CHAR_BACKSPACE: 	return KEY_BACKSPACE;
 		case CHAR_TAB:			return KEY_TAB;
 		case CHAR_LINEFEED:		return KEY_ENTER;
-		default:				return (char)efiKey->UnicodeChar;
+		default:				return (char)(efiKey->UnicodeChar & 0xFF);
 		};
 	}
 }
