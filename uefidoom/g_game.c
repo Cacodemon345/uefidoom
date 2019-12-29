@@ -92,6 +92,7 @@ void	G_DoCompleted (void);
 void	G_DoVictory (void); 
 void	G_DoWorldDone (void); 
 void	G_DoSaveGame (void); 
+void    G_ResetKeycmd (void);
  
  
 gameaction_t    gameaction; 
@@ -214,7 +215,13 @@ int		bodyqueslot;
  
 void*		statcopy;				// for statistics driver
  
- 
+void G_ResetKeycmd()
+{
+    for (int i = 0; i < 255; i++)
+    {
+        gamekeydown[i] = false;
+    }
+} 
  
 int G_CmdChecksum (ticcmd_t* cmd) 
 { 
@@ -263,8 +270,8 @@ void G_BuildTiccmd (ticcmd_t* cmd)
     // on the keyboard and joystick
     if (joyxmove < 0
 	|| joyxmove > 0  
-	|| gamekeydown[key_right]
-	|| gamekeydown[key_left]) 
+	|| gamekeydown[KEY_RIGHTARROW]
+	|| gamekeydown[KEY_LEFTARROW]) 
 	turnheld += ticdup; 
     else 
 	turnheld = 0; 
@@ -277,12 +284,12 @@ void G_BuildTiccmd (ticcmd_t* cmd)
     // let movement keys cancel each other out
     if (strafe) 
     { 
-	if (gamekeydown[key_right]) 
+	if (gamekeydown[KEY_RIGHTARROW]) 
 	{
 	    // fprintf(stderr, "strafe right\n");
 	    side += sidemove[speed]; 
 	}
-	if (gamekeydown[key_left]) 
+	if (gamekeydown[KEY_LEFTARROW]) 
 	{
 	    //	fprintf(stderr, "strafe left\n");
 	    side -= sidemove[speed]; 
@@ -295,9 +302,9 @@ void G_BuildTiccmd (ticcmd_t* cmd)
     } 
     else 
     { 
-	if (gamekeydown[key_right]) 
+	if (gamekeydown[KEY_RIGHTARROW]) 
 	    cmd->angleturn -= angleturn[tspeed]; 
-	if (gamekeydown[key_left]) 
+	if (gamekeydown[KEY_LEFTARROW]) 
 	    cmd->angleturn += angleturn[tspeed]; 
 	if (joyxmove > 0) 
 	    cmd->angleturn -= angleturn[tspeed]; 
@@ -305,12 +312,12 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 	    cmd->angleturn += angleturn[tspeed]; 
     } 
  
-    if (gamekeydown[key_up]) 
+    if (gamekeydown[KEY_UPARROW]) 
     {
 	// fprintf(stderr, "up\n");
 	forward += forwardmove[speed]; 
     }
-    if (gamekeydown[key_down]) 
+    if (gamekeydown[KEY_DOWNARROW]) 
     {
 	// fprintf(stderr, "down\n");
 	forward -= forwardmove[speed]; 
@@ -319,19 +326,19 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 	forward += forwardmove[speed]; 
     if (joyymove > 0) 
 	forward -= forwardmove[speed]; 
-    if (gamekeydown[key_straferight]) 
+    if (gamekeydown['.']) 
 	side += sidemove[speed]; 
-    if (gamekeydown[key_strafeleft]) 
+    if (gamekeydown[',']) 
 	side -= sidemove[speed];
     
     // buttons
     cmd->chatchar = HU_dequeueChatChar(); 
  
-    if (gamekeydown[key_fire] || mousebuttons[mousebfire] 
+    if (gamekeydown[' '] || mousebuttons[mousebfire] 
 	|| joybuttons[joybfire]) 
 	cmd->buttons |= BT_ATTACK; 
  
-    if (gamekeydown[key_use] || joybuttons[joybuse] ) 
+    if (gamekeydown['e'] || joybuttons[joybuse] ) 
     { 
 	cmd->buttons |= BT_USE;
 	// clear double clicks if hit use button 

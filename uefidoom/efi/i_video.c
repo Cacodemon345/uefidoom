@@ -4,12 +4,14 @@
 #include <doomdef.h>
 
 // Efi stuff
+#include <Uefi.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/DebugLib.h>
 
 #include <Protocol/GraphicsOutput.h>
 #include <Protocol/SimpleTextIn.h>
 #include <Protocol/SimpleTextInEx.h>
+#include <Protocol/SimplePointer.h>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -19,6 +21,7 @@ typedef void(*FrameRenderFptr)(void);
 ////////////////////////////////////////////////////////////////////
 
 static EFI_GRAPHICS_OUTPUT_PROTOCOL* gGOP = NULL;
+static EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE* mode = NULL;
 
 static UINT32 frameLeft = 0;
 static UINT32 frameTop = 0;
@@ -27,7 +30,8 @@ static UINT32 frameHeight = 0;
 
 static EFI_GRAPHICS_OUTPUT_BLT_PIXEL gPalette[256] = {0};
 static EFI_GRAPHICS_OUTPUT_BLT_PIXEL* frameBuffer = NULL;
-
+static EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL* gInputEx = NULL;
+static EFI_SIMPLE_POINTER_PROTOCOL* gMouseProtocol = NULL;
 static FrameRenderFptr gRenderFunc = NULL;
 
 #define FRAME_SCALE 2
@@ -143,7 +147,9 @@ void I_InitGraphics (void)
 		printf("I_InitGraphics: no graphics output: 0x%x\n", status);
 		return;
 	}
-
+	status = gBS->HandleProtocol(gST->ConsoleInHandle,&gEfiSimplePointerProtocolGuid, (void**) &gMouseProtocol);
+	if (EFI_ERROR(status)) printf("Failed to initialize mouse pointer.\n");
+	mode = gGOP->Mode;
 	status = gGOP->SetMode(gGOP, 0);
 	if (EFI_ERROR(status))
 	{
@@ -225,6 +231,7 @@ void I_FinishUpdate (void)
 
 void I_ShutdownGraphics(void)
 {
+	gGOP->SetMode(gGOP,mode->Mode);
 	free(frameBuffer);
 	free(screens[0]);
 
@@ -421,10 +428,24 @@ void I_StartTic (void)
 		event.data1 = xlatekey(&inputKey);
 		D_PostEvent(&event);
     
-		event.type = ev_keyup;
-		event.data1 = xlatekey(&inputKey);
-		D_PostEvent(&event);
- 
+		if (gMouseProtocol)
+		{
+			EFI_SIMPLE_POINTER_STATE state;
+			EFI_STATUS status = gMouseProtocol->GetState(gMouseProtocol,&state);
+			if (EFI_ERROR(status))
+			{
+			
+			}
+			else
+			{
+				event.type = ev_mouse;
+				event.data1  = (state.LeftButton == 1);
+				event.data1 |= (state.RightButton == 1 ? 2 : 0);
+				event.data2 = state.RelativeMovementX << 2;
+				event.data3 = state.RelativeMovementY << 2;
+				D_PostEvent(&event);
+			}
+		}
 	}
 }
 

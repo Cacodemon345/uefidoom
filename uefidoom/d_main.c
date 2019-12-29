@@ -379,6 +379,7 @@ void D_DoomLoop (void)
 	if (singletics)
 	{
 		usleep((1000 * 1000) / 35);
+		for (int ticstart = 0; ticstart < 6; ticstart++) // Process up to 5 events.
 	    I_StartTic ();
 	    D_ProcessEvents ();
 	    G_BuildTiccmd (&netcmds[consoleplayer][maketic%BACKUPTICS]);
@@ -393,7 +394,9 @@ void D_DoomLoop (void)
 	{
 	    TryRunTics (); // will run at least one tic
 	}
-		
+
+	G_ResetKeycmd ();
+
 	S_UpdateSounds (players[consoleplayer].mo);// move positional sounds
 
 	// Update display, next frame, with current state.
@@ -878,8 +881,8 @@ void D_DoomMain (void)
     if (M_CheckParm("-cdrom"))
     {
 	printf(D_CDROM);
-	mkdir("c:\\doomdata",0);
-	strcpy (basedefault,"c:/doomdata/default.cfg");
+	mkdir("FS0:\\doomdata",0);
+	strcpy (basedefault,"FS0:/doomdata/default.cfg");
     }	
     
     // turbo option

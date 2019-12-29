@@ -19,9 +19,10 @@
 #pragma implementation "i_system.h"
 #endif
 #include "i_system.h"
-
-
-
+#include <Uefi.h>
+#include <Library/UefiRuntimeServicesTableLib.h>
+#include <Library/UefiRuntimeLib.h>
+#include <Library/UefiBootServicesTableLib.h>
 
 int	mb_used = 20;
 
@@ -54,20 +55,28 @@ byte* I_ZoneBase (int*	size)
     return (byte *) malloc (*size);
 }
 
-
-
 //
 // I_GetTime
 // returns time in 1/70th second tics
 //
+// [Cacodemon345] Rely upon the EFI Runtime Services GetTime function.
+
 int  I_GetTime (void)
 {
     struct timeval	tp;
     //struct timezone	tzp;
     int			newtics;
     static int		basetime=0;
-  
-    gettimeofday(&tp, NULL);
+    if (gST) gRT = gST->RuntimeServices;
+    EFI_TIME *time = NULL;
+    EFI_TIME_CAPABILITIES *timecaps = NULL;
+    if (gRT) gRT->GetTime(time,timecaps);    
+    if (time != NULL)
+    {
+        tp.tv_sec = time->Second;
+        tp.tv_usec = time->Nanosecond / 1000;
+    }
+    else gettimeofday(&tp, NULL);
     if (!basetime)
 	basetime = tp.tv_sec;
     newtics = (tp.tv_sec-basetime)*TICRATE + tp.tv_usec*TICRATE/1000000;
@@ -96,9 +105,7 @@ void I_Quit (void)
     M_SaveDefaults ();
     I_ShutdownGraphics();
 
-    printf("I_Quit: locking\n");
-    while(1) ;
-    //exit(0);
+    exit(0);
 }
 
 void I_WaitVBL(int count)
@@ -179,7 +186,6 @@ EFI_STATUS UefiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE* st)
 	const char* msg = "DOOM: testing serial port\n";
 	SerialPortInitialize();
 	SerialPortWrite(msg, strlen(msg));
-
 	const CHAR16* argv[] = {L"doom.exe", NULL};
 	return ShellAppMain(1, argv);
 }
