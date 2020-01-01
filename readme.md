@@ -22,7 +22,7 @@ Instructions:
 	   MSFT:*_VS2015x86_*_CC_FLAGS       = /Wv:11
 	   MSFT:*_VS2015xASL_*_CC_FLAGS      = /Wv:11
 	   MSFT:*_VS2015x86xASL_*_CC_FLAGS   = /Wv:11```
-	into:
+into:
 	```MSFT:*_VS2015_*_CC_FLAGS          = /Wv:11 /W0
    	   MSFT:*_VS2015x86_*_CC_FLAGS       = /Wv:11 /W0
    	   MSFT:*_VS2015xASL_*_CC_FLAGS      = /Wv:11 /W0
@@ -30,12 +30,13 @@ Instructions:
     This will disable the warnings (don't worry, the project will build and run).
 
 6. Move the "uefidoom" folder from this project inside Applications.
-7. Open a command prompt, type `edksetup.bat` (assuming you set up the environment properly) and then type `build -t VS2015 -b DEBUG -a X64`
-8. If everything goes well, look for a file called "doom.efi" inside this path: 
+7. Download the AudioDxe source code from http://github.com/Goldfish64/AudioPkg. Disable the warnings there too.
+8. Open a command prompt, type `edksetup.bat` (assuming you set up the environment properly) and then type `build -t VS2015 -b DEBUG -a X64`
+9. If everything goes well, look for a file called "doom.efi" inside this path: 
 `path\to\edk2\Build\AppPkg\DEBUG_VS2015\X64\`
-9. Now just copy `doom.wad` (the Registered DOOM 1 1.9 IWAD file) into it.
+10. Now just copy `doom.wad` (the Registered DOOM 1 1.9 IWAD file) into it.
 This should make sure everything is ready for playing.
-Running:
+# Running:
 Make sure you have a UEFI environment in your real hardware. Also, make sure the executable resides inside a FAT32 partition and that the DOOM 1 IWAD file resides in the same directory as the executable.
 You will also need UEFI command-line shell for that (binaries are available online).
 Steps:
@@ -46,11 +47,11 @@ Alternative: Look for a EFI Shell binary online.
 4. Boot your UEFI computer into the UEFI Shell environment.
 5. Change to the directory where the "doom.efi" exec is stored (change the current filesystem drive to the one that contains the exec e.g `FS0:`)
 6. Type "doom" to start DOOM.
-Bugs:
+# Bugs:
 1. The "numsprites" variable in the sprite loading function will be decreased by 3 to allow it to load the sprites.
 2. Game is very slow.
 3. TICRATE constant remains 65 from the original DOOM UEFI port by warfish.
 4. In-game input doesn't work?
-Planned:
+# Planned:
 1. Audio support (using GoldFish64's AudioDxe driver).
 Help is accepted! Please let me know of any problems. Thanks.
