@@ -49,9 +49,9 @@ Alternative: Look for a EFI Shell binary online.
 6. Type "doom" to start DOOM.
 # Bugs:
 1. The "numsprites" variable in the sprite loading function will be decreased by 3 to allow it to load the sprites.
-2. Game is very slow.
-3. TICRATE constant remains 65 from the original DOOM UEFI port by warfish.
-4. In-game input doesn't work?
+2. ~~Game is very slow.~~
+3. ~~TICRATE constant remains 65 from the original DOOM UEFI port by warfish.~~
+4. ~~In-game input doesn't work?~~
 # Planned:
 1. Audio support (using GoldFish64's AudioDxe driver).
 Help is accepted! Please let me know of any problems. Thanks.
