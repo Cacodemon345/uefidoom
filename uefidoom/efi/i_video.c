@@ -12,6 +12,7 @@
 #include <Protocol/SimpleTextIn.h>
 #include <Protocol/SimpleTextInEx.h>
 #include <Protocol/SimplePointer.h>
+#include <Library/IoLib.h>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -33,11 +34,57 @@ static EFI_GRAPHICS_OUTPUT_BLT_PIXEL* frameBuffer = NULL;
 static EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL* gInputEx = NULL;
 static EFI_SIMPLE_POINTER_PROTOCOL* gMouseProtocol = NULL;
 static FrameRenderFptr gRenderFunc = NULL;
-
+static boolean getInput = true;
+static EFI_KEY_DATA keydata[4096];
+static unsigned int keycounter;
 #define FRAME_SCALE 2
 
 ////////////////////////////////////////////////////////////////////
 
+// Code taken from BOOM DOS source code.
+unsigned char key_ascii_table[128] =
+{
+/* 0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F             */
+   0,   27,  '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 8,   9,       /* 0 */
+   'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', 13,  0,   'a', 's',     /* 1 */
+   'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', 39,  '`', 0,   92,  'z', 'x', 'c', 'v',     /* 2 */
+   'b', 'n', 'm', ',', '.', '/', 0,   '*', 0,   ' ', 0,   3,   3,   3,   3,   8,       /* 3 */
+   3,   3,   3,   3,   3,   0,   0,   0,   0,   0,   '-', 0,   0,   0,   '+', 0,       /* 4 */
+   0,   0,   0,   127, 0,   0,   92,  3,   3,   0,   0,   0,   0,   0,   0,   0,       /* 5 */
+   13,  0,   '/', 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   127,     /* 6 */
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   '/', 0,   0,   0,   0,   0        /* 7 */
+};
+int I_ScanCode2DoomCode (int a)
+{
+  switch (a)
+    {
+    default:   return key_ascii_table[a]>8 ? key_ascii_table[a] : a+0x80;
+    case 0x7b: return KEY_PAUSE;
+    case 0x0e: return KEY_BACKSPACE;
+    case 0x48: return KEY_UPARROW;
+    case 0x4d: return KEY_RIGHTARROW;
+    case 0x50: return KEY_DOWNARROW;
+    case 0x4b: return KEY_LEFTARROW;
+    case 0x38: return KEY_LALT;
+    case 0x79: return KEY_RALT;
+    case 0x1d:
+    case 0x78: return KEY_RCTRL;
+    case 0x36:
+    case 0x2a: return KEY_RSHIFT;
+  }
+}
+
+// Automatic caching inverter, so you don't need to maintain two tables.
+// By Lee Killough
+
+int I_DoomCode2ScanCode (int a)
+{
+  static int inverse[256], cache;
+  for (;cache<256;cache++)
+    inverse[I_ScanCode2DoomCode(cache)]=cache;
+  return inverse[a];
+}
+// END BOOM code
 static void DumpGraphicsProtocol(EFI_GRAPHICS_OUTPUT_PROTOCOL* gop)
 {
 	printf("GOP %p\n", gop);
@@ -124,6 +171,22 @@ void GopBltRender(void)
 	}
 }
 
+void I_KeyNotify(EFI_KEY_DATA* keydata)
+{
+	event_t event;
+	event.type = ev_keydown;
+	event.data1 = keydata->Key.UnicodeChar;
+	D_PostEvent(&event);
+}
+void I_ScanKeyNotify(EFI_KEY_DATA* keydata)
+{
+	event_t event;
+	event.type = ev_keydown;
+	event.data1 = xlatekey(&keydata->Key);
+	D_PostEvent(&event);
+}
+EFI_HANDLE *NotifHandle;
+EFI_HANDLE *ScanNotifHandle;
 ////////////////////////////////////////////////////////////////////
 
 // Called by D_DoomMain,
@@ -131,7 +194,7 @@ void GopBltRender(void)
 // and sets up the video mode
 void I_InitGraphics (void)
 {
-	EnumerateGraphics();
+	//EnumerateGraphics();
 
 	if (gGOP != NULL)
 	{
@@ -149,6 +212,24 @@ void I_InitGraphics (void)
 	}
 	status = gBS->HandleProtocol(gST->ConsoleInHandle,&gEfiSimplePointerProtocolGuid, (void**) &gMouseProtocol);
 	if (EFI_ERROR(status)) printf("Failed to initialize mouse pointer.\n");
+	status = gBS->HandleProtocol(gST->ConsoleInHandle,&gEfiSimpleTextInputExProtocolGuid,(void**) &gInputEx);
+	if (EFI_ERROR(status)) printf("Failed to initialize Extended Input protocol.\n");
+	else
+	{
+		int i;
+		for (i = 0; i < 256; i++)
+		{
+			EFI_KEY_DATA keydata;
+			keydata.Key.UnicodeChar = i;
+			gInputEx->RegisterKeyNotify(gInputEx,&keydata,I_KeyNotify,(void**)&NotifHandle);
+		}
+		for (i = 0; i < 0x17; ++i)
+		{
+			EFI_KEY_DATA scankeydata;
+			scankeydata.Key.ScanCode = i;
+			gInputEx->RegisterKeyNotify(gInputEx,&scankeydata,I_ScanKeyNotify,(void**)&ScanNotifHandle);
+		}
+	}
 	mode = gGOP->Mode;
 	status = gGOP->SetMode(gGOP, 0);
 	if (EFI_ERROR(status))
@@ -238,6 +319,7 @@ void I_ShutdownGraphics(void)
 	gGOP = NULL;
 	gRenderFunc = NULL;
 
+	gST->ConOut->SetMode(gST->ConOut,0);
 	gST->ConOut->ClearScreen(gST->ConOut);
 	gST->ConOut->EnableCursor(gST->ConOut, TRUE);
 }
@@ -397,18 +479,39 @@ static int xlatekey(EFI_INPUT_KEY* efiKey)
 		};
 	}
 }
-
+int microseconds = 0;
 //
 // I_StartTic
 //
 void I_StartTic (void)
 {
 	// Get all pending input events
+	//IoWrite8(0x60,1 | (1 << 6));
 	EFI_STATUS status = EFI_SUCCESS;
 	EFI_INPUT_KEY inputKey;
-
+	char scancode;
 	while (1)
 	{
+		/*UINT8 statreg = IoRead8(0x64);
+		if (statreg & 1) scancode = IoRead8(0x60);
+		if (scancode)
+		if (scancode & 0x80)
+		{
+			event_t event1;
+			event1.type = ev_keyup;
+			event1.data1 = I_ScanCode2DoomCode(scancode & 0x7F);
+			D_PostEvent(event1);
+		}
+		else
+		{
+			event_t event2;
+			event2.type = ev_keydown;
+			event2.data1 = I_ScanCode2DoomCode(scancode);
+			D_PostEvent(event2);
+		}*/
+		
+		//int cmdbyte = IoRead8(0x60);
+		//scancode = IoRead8(0x64);
 		status = gST->ConIn->ReadKeyStroke(gST->ConIn, &inputKey);
 		if (status == EFI_NOT_READY)
 		{
@@ -427,7 +530,7 @@ void I_StartTic (void)
 		event.type = ev_keydown;
 		event.data1 = xlatekey(&inputKey);
 		D_PostEvent(&event);
-    
+		
 		if (gMouseProtocol)
 		{
 			EFI_SIMPLE_POINTER_STATE state;
@@ -438,6 +541,7 @@ void I_StartTic (void)
 			}
 			else
 			{
+				event_t event;
 				event.type = ev_mouse;
 				event.data1  = (state.LeftButton == 1);
 				event.data1 |= (state.RightButton == 1 ? 2 : 0);

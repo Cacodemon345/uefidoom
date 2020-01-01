@@ -230,7 +230,8 @@ typedef struct
     int		scantranslate;		// PC scan code hack
     int		untranslated;		// lousy hack
 } default_t;
-
+#define NORMALUNIX
+#undef SNDSERV
 default_t	defaults[] =
 {
     {"mouse_sensitivity",&mouseSensitivity, 5},
@@ -310,7 +311,7 @@ void M_SaveDefaults (void)
     int		i;
     int		v;
     FILE*	f;
-	
+	defaultfile = "./default.cfg";
     f = fopen (defaultfile, "w");
     if (!f)
 	return; // can't write the file, but don't complain
@@ -352,7 +353,7 @@ void M_LoadDefaults (void)
     numdefaults = sizeof(defaults)/sizeof(defaults[0]);
     for (i=0 ; i<numdefaults ; i++)
 	*defaults[i].location = defaults[i].defaultvalue;
-    
+    return; // Disable file parsing for now.
     // check for a custom default file
     i = M_CheckParm ("-config");
     if (i && i<myargc-1)
@@ -362,7 +363,7 @@ void M_LoadDefaults (void)
     }
     else
 	defaultfile = basedefault;
-    
+    defaultfile = "./default.cfg";
     // read the file in, overriding any set defaults
     f = fopen (defaultfile, "r");
     if (f)

@@ -82,7 +82,7 @@ z_zone.c
   MdeModulePkg/MdeModulePkg.dec
   ShellPkg/ShellPkg.dec
   StdLib/StdLib.dec
-
+  AudioPkg/AudioPkg.dec
 [LibraryClasses]
   UefiApplicationEntryPoint
   UefiLib
@@ -97,6 +97,7 @@ z_zone.c
   gEfiDevicePathToTextProtocolGuid
   gEfiSimplePointerProtocolGuid
   gEfiSimpleTextInputExProtocolGuid
+  gEfiAudioIoProtocolGuid
 
 [BuildOptions]
     *:*_*_*_CC_FLAGS      = -DNORMALUNIX

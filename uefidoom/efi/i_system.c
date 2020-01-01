@@ -67,10 +67,9 @@ int  I_GetTime (void)
     //struct timezone	tzp;
     int			newtics;
     static int		basetime=0;
-    if (gST) gRT = gST->RuntimeServices;
     EFI_TIME *time = NULL;
     EFI_TIME_CAPABILITIES *timecaps = NULL;
-    if (gRT) gRT->GetTime(time,timecaps);    
+    if (gST) gST->RuntimeServices->GetTime(time,timecaps);    
     if (time != NULL)
     {
         tp.tv_sec = time->Second;
@@ -90,6 +89,7 @@ int  I_GetTime (void)
 //
 void I_Init (void)
 {
+    gBS->SetWatchdogTimer(0,0,0,NULL);
     I_InitSound();
     //  I_InitGraphics();
 }

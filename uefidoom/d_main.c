@@ -379,7 +379,7 @@ void D_DoomLoop (void)
 	if (singletics)
 	{
 		usleep((1000 * 1000) / 35);
-		for (int ticstart = 0; ticstart < 6; ticstart++) // Process up to 5 events.
+		//for (int ticstart = 0; ticstart < 6; ticstart++) // Process up to 5 events.
 	    I_StartTic ();
 	    D_ProcessEvents ();
 	    G_BuildTiccmd (&netcmds[consoleplayer][maketic%BACKUPTICS]);
@@ -1155,7 +1155,7 @@ void D_DoomMain (void)
     if (p && p < myargc-1)
     {
 	if (M_CheckParm("-cdrom"))
-	    sprintf(file, "c:\\doomdata\\"SAVEGAMENAME"%c.dsg",myargv[p+1][0]);
+	    sprintf(file, "FS0:/doomdata/"SAVEGAMENAME"%c.dsg",myargv[p+1][0]);
 	else
 	    sprintf(file, SAVEGAMENAME"%c.dsg",myargv[p+1][0]);
 	G_LoadGame (file);

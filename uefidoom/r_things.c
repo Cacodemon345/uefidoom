@@ -204,10 +204,10 @@ void R_InitSpriteDefs (char** namelist)
     // scan all the lump names for each of the names,
     //  noting the highest frame letter.
     // Just compare 4 characters as ints
-    printf("Number of sprites:%d\n",numsprites);
+   // printf("Number of sprites:%d\n",numsprites);
     for (i=0 ; i<(numsprites - 3) ; i++)
     {
-    printf("Currently at: %d\n",i);
+    //printf("Currently at: %d\n",i);
 	spritename = namelist[i];
 	memset (sprtemp,-1, sizeof(sprtemp));
 		
