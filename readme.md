@@ -54,4 +54,5 @@ Alternative: Look for a EFI Shell binary online.
 4. ~~In-game input doesn't work?~~
 # Planned:
 1. Audio support (using GoldFish64's AudioDxe driver).
+# Helping
 Help is accepted! Please let me know of any problems. Thanks.
