@@ -146,24 +146,27 @@ extern boolean demorecording;
 
 void I_Error (char *error, ...)
 {
-    va_list	argptr;
-
-    // Message first.
-    va_start (argptr,error);
-    printf ("Error: ");
-    vprintf (error,argptr);
-    printf ("\n");
-    va_end (argptr);
-
+    // [Cacodemon345] First, shut everything down. Specially, we need to exit back to text mode.
     // Shutdown. Here might be other errors.
     if (demorecording)
 	G_CheckDemoStatus();
 
     D_QuitNetGame ();
     I_ShutdownGraphics();
+    I_ShutdownSound();
+
+    // Message first.
+    va_list	argptr;
+    va_start (argptr,error);
+    printf ("Error: ");
+    vprintf (error,argptr);
+    printf ("\n");
+    va_end (argptr);
+
+
     
-	while(1) ;
-    //exit(-1);
+	
+    exit(-1);
 }
 
 ///

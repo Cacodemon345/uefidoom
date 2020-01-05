@@ -25,6 +25,7 @@ rcsid[] = "$Id: m_argv.c,v 1.1 1997/02/03 22:45:10 b1 Exp $";
 
 
 #include <string.h>
+#include <wchar.h>
 
 int		myargc;
 char**		myargv;

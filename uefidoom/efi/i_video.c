@@ -171,19 +171,21 @@ void GopBltRender(void)
 	}
 }
 
-void I_KeyNotify(EFI_KEY_DATA* keydata)
+EFI_STATUS EFIAPI I_KeyNotify(EFI_KEY_DATA* keydata)
 {
 	event_t event;
 	event.type = ev_keydown;
 	event.data1 = keydata->Key.UnicodeChar;
 	D_PostEvent(&event);
+	return EFI_SUCCESS;
 }
-void I_ScanKeyNotify(EFI_KEY_DATA* keydata)
+EFI_STATUS EFIAPI I_ScanKeyNotify(EFI_KEY_DATA* keydata)
 {
 	event_t event;
 	event.type = ev_keydown;
 	event.data1 = xlatekey(&keydata->Key);
 	D_PostEvent(&event);
+	return EFI_SUCCESS;
 }
 EFI_HANDLE *NotifHandle;
 EFI_HANDLE *ScanNotifHandle;
@@ -211,7 +213,28 @@ void I_InitGraphics (void)
 		return;
 	}
 	status = gBS->HandleProtocol(gST->ConsoleInHandle,&gEfiSimplePointerProtocolGuid, (void**) &gMouseProtocol);
-	if (EFI_ERROR(status)) printf("Failed to initialize mouse pointer.\n");
+	if (EFI_ERROR(status))
+	{
+		status = gBS->LocateProtocol(&gEfiSimplePointerProtocolGuid,NULL, (void**) &gMouseProtocol);
+		if (EFI_ERROR(status))
+		{
+			EFI_HANDLE* handles;
+			UINTN count;
+			status = gBS->LocateHandleBuffer(ByProtocol,&gEfiSimplePointerProtocolGuid,NULL,&count,&handles);
+			if (!EFI_ERROR(status))
+			{
+				for (int HandleCountIndex = 0; HandleCountIndex < count; HandleCountIndex++)
+				{
+					if (EFI_ERROR(gBS->HandleProtocol(handles[HandleCountIndex],&gEfiSimplePointerProtocolGuid,(void**)&gMouseProtocol)))
+					{
+						continue;
+					}
+					else break;
+				}
+			}
+			else printf("Failed to initialize mouse pointer.\n");
+		}
+	}
 	status = gBS->HandleProtocol(gST->ConsoleInHandle,&gEfiSimpleTextInputExProtocolGuid,(void**) &gInputEx);
 	if (EFI_ERROR(status)) printf("Failed to initialize Extended Input protocol.\n");
 	else
@@ -319,7 +342,7 @@ void I_ShutdownGraphics(void)
 	gGOP = NULL;
 	gRenderFunc = NULL;
 
-	gST->ConOut->SetMode(gST->ConOut,0);
+	gST->ConOut->Reset(gST->ConOut,TRUE);
 	gST->ConOut->ClearScreen(gST->ConOut);
 	gST->ConOut->EnableCursor(gST->ConOut, TRUE);
 }
