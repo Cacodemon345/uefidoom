@@ -209,6 +209,7 @@ int I_StartSound(int id,
                  int pitch,
                  int priority)
 {
+    if (!audioIo) return;
     int *length;
     char* sampdata;
     char* lumpdata;
