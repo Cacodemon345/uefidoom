@@ -17,24 +17,13 @@ Instructions:
 	`SerialPortLib|PcAtChipsetPkg/Library/SerialIoLib/SerialIoLib.inf`
    Also add the path to the inf file of this project in the [Components] list like this:
 	`AppPkg/Applications/uefidoom/doom.inf`
-5. Edit the StdLib.inc file inside StdLib directory; change these lines:
-	```MSFT:*_VS2015_*_CC_FLAGS          = /Wv:11
-	   MSFT:*_VS2015x86_*_CC_FLAGS       = /Wv:11
-	   MSFT:*_VS2015xASL_*_CC_FLAGS      = /Wv:11
-	   MSFT:*_VS2015x86xASL_*_CC_FLAGS   = /Wv:11```
-into:
-	```MSFT:*_VS2015_*_CC_FLAGS          = /Wv:11 /W0
-   	   MSFT:*_VS2015x86_*_CC_FLAGS       = /Wv:11 /W0
-   	   MSFT:*_VS2015xASL_*_CC_FLAGS      = /Wv:11 /W0
-           MSFT:*_VS2015x86xASL_*_CC_FLAGS   = /Wv:11 /W0```
-    This will disable the warnings (don't worry, the project will build and run).
 
-6. Move the "uefidoom" folder from this project inside Applications.
-7. Download the AudioDxe source code from http://github.com/Goldfish64/AudioPkg. Disable the warnings there too.
-8. Open a command prompt, type `edksetup.bat` (assuming you set up the environment properly) and then type `build -t VS2015 -b DEBUG -a X64`
-9. If everything goes well, look for a file called "doom.efi" inside this path: 
+5. Move the "uefidoom" folder from this project inside Applications.
+6. Download the AudioDxe source code from http://github.com/Goldfish64/AudioPkg. Disable the warnings there too.
+7. Open a command prompt, type `edksetup.bat` (assuming you set up the environment properly) and then type `build -t VS2015 -b DEBUG -a X64`
+8. If everything goes well, look for a file called "doom.efi" inside this path: 
 `path\to\edk2\Build\AppPkg\DEBUG_VS2015\X64\`
-10. Now just copy `doom.wad` (the Registered DOOM 1 1.9 IWAD file) into it.
+9. Now just copy `doom.wad` (the Registered DOOM 1 1.9 IWAD file) into it.
 This should make sure everything is ready for playing.
 # Running:
 Make sure you have a UEFI environment in your real hardware. Also, make sure the executable resides inside a FAT32 partition and that the DOOM 1 IWAD file resides in the same directory as the executable.
