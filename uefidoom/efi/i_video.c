@@ -279,7 +279,7 @@ void I_InitGraphics (void)
 		return;
 	}
 
-	frameBuffer = malloc(sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL) * frameWidth * frameHeight);
+	frameBuffer = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL*)malloc(sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL) * frameWidth * frameHeight);
 	if (!frameBuffer)
 	{
 		free(screens[0]);
