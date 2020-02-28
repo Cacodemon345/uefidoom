@@ -22,13 +22,13 @@
 
 #ifndef __M_ARGV__
 #define __M_ARGV__
-
+#include "wchar.h"
 //
 // MISC
 //
 extern  int	myargc;
 extern  char**	myargv;
-
+extern wchar_t** mywargv;
 // Returns the position of the given parameter
 // in the arg list (0 if not found).
 int M_CheckParm (char* check);

@@ -37,6 +37,8 @@ static const char rcsid[] = "$Id: d_main.c,v 1.8 1997/02/03 22:45:09 b1 Exp $";
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <wchar.h>
+#include <wctype.h>
 
 //#endif
 
@@ -73,7 +75,7 @@ static const char rcsid[] = "$Id: d_main.c,v 1.8 1997/02/03 22:45:09 b1 Exp $";
 #include "r_local.h"
 
 #include "d_main.h"
-
+#define R_OK 0
 //
 // D-DoomLoop()
 // Not a globally visible function,
@@ -353,7 +355,6 @@ void D_DoomLoop(void)
 		if (singletics)
 		{
 			usleep((1000 * 1000) / 35);
-			//for (int ticstart = 0; ticstart < 6; ticstart++) // Process up to 5 events.
 			I_StartTic();
 			D_ProcessEvents();
 			G_BuildTiccmd(&netcmds[consoleplayer][maketic % BACKUPTICS]);
@@ -547,31 +548,31 @@ void IdentifyVersion(void)
 		doomwaddir = ".";
 
 	// Commercial.
-	//doom2wad = malloc(strlen(doomwaddir)+1+9+1);
-	//sprintf(doom2wad, "%s/doom2.wad", doomwaddir);
+	doom2wad = malloc(strlen(doomwaddir)+1+18+1);
+	sprintf(doom2wad, "%s/doom2.wad", doomwaddir);
 
 	// Retail.
-	//doomuwad = malloc(strlen(doomwaddir)+1+8+1);
-	//sprintf(doomuwad, "%s/doomu.wad", doomwaddir);
+	doomuwad = malloc(strlen(doomwaddir)+1+18+1);
+	sprintf(doomuwad, "%s/doomu.wad", doomwaddir);
 
 	// Registered.
 	doomwad = malloc(strlen(doomwaddir) + 1 + 18 + 1);
 	sprintf(doomwad, "%s/doom.wad", doomwaddir);
 
 	// Shareware.
-	//doom1wad = malloc(strlen(doomwaddir)+1+9+1);
-	//sprintf(doom1wad, "%s/doom1.wad", doomwaddir);
+	doom1wad = malloc(strlen(doomwaddir)+1+18+1);
+	sprintf(doom1wad, "%s/doom1.wad", doomwaddir);
 
 	// Bug, dear Shawn.
 	// Insufficient malloc, caused spurious realloc errors.
-	//plutoniawad = malloc(strlen(doomwaddir)+1+/*9*/12+1);
-	//sprintf(plutoniawad, "%s/plutonia.wad", doomwaddir);
+	plutoniawad = malloc(strlen(doomwaddir)+1+24+1);
+	sprintf(plutoniawad, "%s/plutonia.wad", doomwaddir);
 
-	//tntwad = malloc(strlen(doomwaddir)+1+9+1);
-	//sprintf(tntwad, "%s/tnt.wad", doomwaddir);
+	tntwad = malloc(strlen(doomwaddir)+1+18+1);
+	sprintf(tntwad, "%s/tnt.wad", doomwaddir);
 
 	// French stuff.
-	//doom2fwad = malloc(strlen(doomwaddir)+1+10+1);
+	//doom2fwad = malloc(strlen(doomwaddir)+1+20+1);
 	//sprintf(doom2fwad, "%s/doom2f.wad", doomwaddir);
 
 	/* 
@@ -634,7 +635,7 @@ void IdentifyVersion(void)
     }
 */
 
-	/* 
+	
     if ( 0 == access (doom2wad,R_OK) )
     {
 	gamemode = commercial;
@@ -642,9 +643,8 @@ void IdentifyVersion(void)
 	D_AddFile (doom2wad);
 	return;
     }
-*/
 
-	/*  
+ 
     if ( 0 == access (doomuwad,R_OK) )
     {
 	printf("%s\n", doomuwad);
@@ -652,7 +652,7 @@ void IdentifyVersion(void)
       D_AddFile (doomuwad);
       return;
     }
-*/
+
 
 	if (0 == access(doomwad, R_OK))
 	{
@@ -661,7 +661,6 @@ void IdentifyVersion(void)
 		return;
 	}
 
-	/*  
     if ( 0 == access (doom1wad,R_OK) )
     {
 	printf("%s\n", doom1wad);
@@ -669,7 +668,7 @@ void IdentifyVersion(void)
       D_AddFile (doom1wad);
       return;
     }
-*/
+
 
 	Print(L"Game mode indeterminate.\n");
 	gamemode = indetermined;
@@ -766,7 +765,12 @@ void D_DoomMain(void)
 
 	setbuf(stdout, NULL);
 	modifiedgame = false;
-
+	printf("\nArguments:");
+	for (int i = 0; i < myargc; i++)
+	{
+		printf(" %s",myargv[i]);
+	}
+	printf(".\n");
 	nomonsters = M_CheckParm("-nomonsters");
 	respawnparm = M_CheckParm("-respawn");
 	fastparm = M_CheckParm("-fast");

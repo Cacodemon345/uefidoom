@@ -209,7 +209,7 @@ int I_StartSound(int id,
                  int pitch,
                  int priority)
 {
-    if (!audioIo) return;
+    if (!outputFound) return 0;
     int *length;
     char* sampdata;
     char* lumpdata;
@@ -219,8 +219,8 @@ int I_StartSound(int id,
     sampdata = malloc(lumplength - 8);
     lumpdata = malloc(lumplength);
     W_ReadLump(sfxlumpnum,lumpdata);
-    memmove(sampdata,lumpdata[0x8],sampLength);
-    int realvol = 100 * (vol / 127);
+    memmove(sampdata,lumpdata + 8,sampLength);
+    unsigned int realvol = 100 * (vol / 127);
     char *expandedSampleData = calloc(1, (lumplength) * 4);
     char *sfxdata = lumpdata;
     for (int sampleByte = 0; sampleByte < lumplength; sampleByte++)
@@ -232,7 +232,7 @@ int I_StartSound(int id,
     }
     audioIo->SetupPlayback(audioIo, outputToUse, realvol, EfiAudioIoFreq44kHz, EfiAudioIoBits16, 2);
     audioIo->StartPlaybackAsync(audioIo, sfxdata, lumplength * 4, 8 * 4, I_FinishedSound, (void*)calldata); // Blast it out unprocessed.
-    return;
+    return 0;
     S_sfx[id].data = getsfx(S_sfx[id].name, length);
     EFI_STATUS stats;
     if (audioIo)

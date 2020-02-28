@@ -30,7 +30,20 @@ rcsid[] = "$Id: i_main.c,v 1.4 1997/02/03 22:45:10 b1 Exp $";
 
 #include "m_argv.h"
 #include "d_main.h"
-
+#include <stdlib.h>
+#include <wchar.h>
+#include <wctype.h>
+char* UCS2toANSI(wchar_t* wstr)
+{
+    char* newchar = calloc(wcslen(wstr) + 1,1);
+    int i = 0;
+    for (i = 0; i < wcslen(wstr); i++)
+    {
+        newchar[i] = wstr[i];
+    }
+    newchar[i] = 0;
+    return newchar;
+}
 int
 main
 ( int		argc,
@@ -38,7 +51,11 @@ main
 { 
     myargc = argc; 
     myargv = argv; 
- 
+    mywargv = (wchar_t**)argv;
+    /*for (int i = 0; i < argc; i++)
+    {
+        myargv[i] = UCS2toANSI(mywargv[i]);
+    }*/
     D_DoomMain (); 
 
     return 0;

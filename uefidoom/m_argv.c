@@ -25,13 +25,28 @@ rcsid[] = "$Id: m_argv.c,v 1.1 1997/02/03 22:45:10 b1 Exp $";
 
 
 #include <string.h>
+#include <stdlib.h>
 #include <wchar.h>
+#include <wctype.h>
 
 int		myargc;
 char**		myargv;
+wchar_t** mywargv;
 
+mbstate_t convstate;
 
-
+// Taken from ReactOS.
+int wcscasecmp(const wchar_t* cs,const wchar_t * ct)
+ {
+     while (towlower(*cs) == towlower(*ct))
+     {
+         if (*cs == 0)
+             return 0;
+         cs++;
+         ct++;
+     }
+     return towlower(*cs) - towlower(*ct);
+ }
 
 //
 // M_CheckParm
@@ -41,12 +56,14 @@ char**		myargv;
 // or 0 if not present
 int M_CheckParm (char *check)
 {
-    int		i;
-
+    int		i = 1;
     for (i = 1;i<myargc;i++)
     {
-	if ( !strcasecmp(check, myargv[i]) )
-	    return i;
+        if ( !strcasecmp(check, myargv[i]) )
+        {
+            printf("Found parameter: %s\n",check);
+            return i;
+        }
     }
 
     return 0;

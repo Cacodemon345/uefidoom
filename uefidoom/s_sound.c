@@ -368,8 +368,8 @@ S_StartSoundAtVolume
   // cache data if necessary
   if (!sfx->data)
   {
-    fprintf( stderr,
-	     "S_StartSoundAtVolume: 16bit and not pre-cached - wtf?\n");
+    /*fprintf( stderr,
+	     "S_StartSoundAtVolume: 16bit and not pre-cached - wtf?\n");*/
 
     // DOS remains, 8bit handling
     //sfx->data = (void *) W_CacheLumpNum(sfx->lumpnum, PU_MUSIC);

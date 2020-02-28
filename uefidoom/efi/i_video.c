@@ -237,7 +237,8 @@ void I_InitGraphics (void)
 	}
 	status = gBS->HandleProtocol(gST->ConsoleInHandle,&gEfiSimpleTextInputExProtocolGuid,(void**) &gInputEx);
 	if (EFI_ERROR(status)) printf("Failed to initialize Extended Input protocol.\n");
-	else
+	
+	/*else
 	{
 		int i;
 		for (i = 0; i < 256; i++)
@@ -252,7 +253,7 @@ void I_InitGraphics (void)
 			scankeydata.Key.ScanCode = i;
 			gInputEx->RegisterKeyNotify(gInputEx,&scankeydata,I_ScanKeyNotify,(void**)&ScanNotifHandle);
 		}
-	}
+	}*/
 	mode = gGOP->Mode;
 	status = gGOP->SetMode(gGOP, 0);
 	if (EFI_ERROR(status))
@@ -352,7 +353,7 @@ void I_SetPalette (byte* palette)
 {
 	if (!palette)
 	{
-		printf("No palette!\n");
+		printf("I_SetPalette: No palette!\n");
 	}
 
 	size_t i = 0;
