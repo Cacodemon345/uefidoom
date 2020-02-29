@@ -225,10 +225,10 @@ int I_StartSound(int id,
     char *sfxdata = lumpdata;
     for (int sampleByte = 0; sampleByte < lumplength; sampleByte++)
     {
-        expandedSampleData[sampleByte * 4] =
-        expandedSampleData[sampleByte * 4 + 1] =
-        expandedSampleData[sampleByte * 4 + 2] =
-        expandedSampleData[sampleByte * 4 + 3] = sfxdata[sampleByte];
+        expandedSampleData[sampleByte * 4] = sfxdata[sampleByte];
+        expandedSampleData[sampleByte * 4 + 1] = sfxdata[sampleByte + 1] / 4;
+        expandedSampleData[sampleByte * 4 + 2] = sfxdata[sampleByte + 2] / 4;
+        expandedSampleData[sampleByte * 4 + 3] = sfxdata[sampleByte + 3] / 4;
     }
     audioIo->SetupPlayback(audioIo, outputToUse, realvol, EfiAudioIoFreq44kHz, EfiAudioIoBits16, 2);
     audioIo->StartPlaybackAsync(audioIo, sfxdata, lumplength * 4, 8 * 4, I_FinishedSound, (void*)calldata); // Blast it out unprocessed.

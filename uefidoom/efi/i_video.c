@@ -32,7 +32,7 @@ static UINT32 frameHeight = 0;
 static EFI_GRAPHICS_OUTPUT_BLT_PIXEL gPalette[256] = {0};
 static EFI_GRAPHICS_OUTPUT_BLT_PIXEL* frameBuffer = NULL;
 static EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL* gInputEx = NULL;
-static EFI_SIMPLE_POINTER_PROTOCOL* gMouseProtocol = NULL;
+EFI_SIMPLE_POINTER_PROTOCOL* gMouseProtocol = NULL;
 static FrameRenderFptr gRenderFunc = NULL;
 static boolean getInput = true;
 static EFI_KEY_DATA keydata[4096];
@@ -255,12 +255,11 @@ void I_InitGraphics (void)
 		}
 	}*/
 	mode = gGOP->Mode;
-	status = gGOP->SetMode(gGOP, 0);
+	/*status = gGOP->SetMode(gGOP, 0);
 	if (EFI_ERROR(status))
 	{
-		printf("Could not set gop mode\n");
-		return;
-	}
+		printf("GOP mode not set; using native console mode\n");
+	}*/
 	
 	// Calculate frame origin in current display mode
 	frameWidth = SCREENWIDTH * FRAME_SCALE;
@@ -275,7 +274,7 @@ void I_InitGraphics (void)
 	screens[0] = (unsigned char *) malloc (SCREENWIDTH * SCREENHEIGHT); // byte per pixel?
 	if (!screens[0])
 	{
-		printf("!screens[0]\n");
+		I_Error("Failed to allocate pixel screen!\n");
 		return;
 	}
 
@@ -283,7 +282,7 @@ void I_InitGraphics (void)
 	if (!frameBuffer)
 	{
 		free(screens[0]);
-		printf("!frameBuffer\n");
+		I_Error("Failed to allocate frameBuffer!\n");
 		return;
 	}
 	
@@ -299,13 +298,10 @@ void MakeFrame (void)
 	UINTN i;
 	UINTN j;
 
-	// For now we expect to be scaled by 2
-	ASSERT (FRAME_SCALE == 2);
-
 	// Each pixel in screen buffer is a pallette index
 	byte* srcLine = screens[0];
 	EFI_GRAPHICS_OUTPUT_BLT_PIXEL* dstLine = frameBuffer;
-
+	UINTN linedest = 0;
 	for (i = 0; i < SCREENHEIGHT; ++i)
 	{
 		// Convert source screen line into framebuffer pixels
@@ -314,16 +310,18 @@ void MakeFrame (void)
 		{
 			byte pixel = *srcLine++;
 
-			// Double this pixel in width
+			for (linedest = 0; linedest < FRAME_SCALE; linedest++)
+			{
 			*dstLine++ = gPalette[pixel];
-			*dstLine++ = gPalette[pixel];
+			}
 		}
-		
-		// Copy this dst line to the next one
-		memcpy(dstLine, curLine, frameWidth * sizeof(*frameBuffer));
-		
-		// Skip next line (copied above)
-		dstLine += frameWidth;
+		for (linedest = 0; linedest < (FRAME_SCALE - 1); linedest++)
+		{
+			// Copy this dst line to the next one
+			memcpy(dstLine, curLine, frameWidth * sizeof(*frameBuffer));
+			// Skip next line (copied above)
+			dstLine += frameWidth;
+		}
 	}
 
 }
@@ -342,7 +340,7 @@ void I_ShutdownGraphics(void)
 
 	gGOP = NULL;
 	gRenderFunc = NULL;
-
+	gST->ConOut->SetMode(gST->ConOut,0);
 	gST->ConOut->Reset(gST->ConOut,TRUE);
 	gST->ConOut->ClearScreen(gST->ConOut);
 	gST->ConOut->EnableCursor(gST->ConOut, TRUE);

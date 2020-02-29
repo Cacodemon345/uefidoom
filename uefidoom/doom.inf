@@ -18,6 +18,10 @@ efi/i_system.c
 efi/i_net.c
 efi/i_sound.c
 efi/i_video.c
+sound/samplerate.c
+sound/src_linear.c
+sound/src_sinc.c
+sound/src_zoh.c
 am_map.c
 d_items.c
 d_main.c
