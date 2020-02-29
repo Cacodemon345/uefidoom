@@ -22,10 +22,10 @@ Instructions:
 7. Open a command prompt, type `edksetup.bat` (assuming you set up the environment properly) and then type `build -t VS2015 -b DEBUG -a X64`
 8. If everything goes well, look for a file called "doom.efi" inside this path: 
 `path\to\edk2\Build\AppPkg\DEBUG_VS2015\X64\`
-9. Now just copy `doom.wad` (the Registered DOOM 1 1.9 IWAD file) into it.
+9. Now just copy the Doom IWADs into it.
 This should make sure everything is ready for playing.
 # Running:
-Make sure you have a UEFI environment in your real hardware. Also, make sure the executable resides inside a FAT32 partition and that the DOOM 1 IWAD file resides in the same directory as the executable.
+Make sure you have a UEFI environment in your real hardware. Also, make sure the executable resides inside a FAT32 partition and that the DOOM IWAD files resides in the same directory as the executable.
 You will also need UEFI command-line shell for that (binaries are available online).
 Steps:
 1. Build the UEFI Shell package (ShellPkg) using `build -t VS2015 -a X64 -p ShellPkg/ShellPkg.dsc -b DEBUG` (run edksetup.bat before that, once again assuming the environment is properly set). If everything goes well, look for `Shell.efi` inside `path\to\edk2\Build\DEBUG_VS2015\X64\ShellPkg\Application\Shell\Shell\OUTPUT`
