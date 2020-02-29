@@ -18,7 +18,7 @@ Instructions:
    Also add the path to the inf file of this project in the [Components] list like this:
 	`AppPkg/Applications/uefidoom/doom.inf`
 5. Move the "uefidoom" folder from this project inside Applications.
-6. Download the AudioDxe source code from https://github.com/FangJiaZhen/AudioPkg. Disable the warnings there too.
+6. Download the AudioDxe source code from https://github.com/FangJiaZhen/AudioPkg.
 7. Open a command prompt, type `edksetup.bat` (assuming you set up the environment properly) and then type `build -t VS2015 -b DEBUG -a X64`
 8. If everything goes well, look for a file called "doom.efi" inside this path: 
 `path\to\edk2\Build\AppPkg\DEBUG_VS2015\X64\`
