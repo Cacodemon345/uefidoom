@@ -95,6 +95,7 @@ z_zone.c
   UefiBootServicesTableLib
   DevShell
   SerialPortLib
+  LibMath
 
 [Protocols]
   gEfiLoadedImageProtocolGuid

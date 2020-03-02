@@ -54,7 +54,7 @@ char *sprnames[NUMSPRITES] = {
     "HDB4","HDB5","HDB6","POB1","POB2","BRS1","TLMP","TLP2"
 };
 
-
+#pragma warning(disable : 4113)
 // Doesn't work with g++, needs actionf_p1
 void  A_Light0();
 void A_WeaponReady();

@@ -31,8 +31,10 @@
 #include "w_wad.h"
 #include <wchar.h>
 
+#include "sound/common.h"
 #include "doomdef.h"
 #include "Uefi.h"
+#include "stdbool.h"
 #include <Library/UefiBootServicesTableLib.h>
 #include <Include/Protocol/AudioIo.h>
 #include <Library/UefiLib.h>
@@ -47,8 +49,16 @@ UINTN soundFreq = 44100;
 STATIC CHAR16 *DefaultDevices[EfiAudioIoDeviceMaximum] = { L"Line", L"Speaker", L"Headphones", L"SPDIF", L"Mic", L"HDMI", L"Other" };
 STATIC CHAR16 *Locations[EfiAudioIoLocationMaximum] = { L"N/A", L"rear", L"front", L"left", L"right", L"top", L"bottom", L"other" };
 STATIC CHAR16 *Surfaces[EfiAudioIoSurfaceMaximum] = { L"external", L"internal", L"other" };
+float* floatsounddata = NULL;
+float* floatsounddataOutput = NULL;
+short* shortsounddataOutput = NULL;
+bool soundinit = false;
 void I_InitSound()
 {
+    soundinit = true;
+    floatsounddata = calloc(MAX_UINT16,sizeof(short));
+    floatsounddataOutput = calloc(MAX_UINT16,sizeof(short) * 2);
+    shortsounddataOutput = calloc(MAX_UINT16,1);
     UINTN HandlesCount = 0;
     EFI_HANDLE* handles = malloc(sizeof(EFI_HANDLE) * 256);
     EFI_STATUS status1 = gBS->LocateHandleBuffer(ByProtocol,&gEfiAudioIoProtocolGuid,NULL,&HandlesCount,&handles);
@@ -113,7 +123,13 @@ void I_SubmitSound(void)
 
 void I_ShutdownSound(void)
 {
-    if (audioIo) audioIo->StopPlayback(audioIo);
+    if (audioIo && soundinit)
+    {
+        audioIo->StopPlayback(audioIo);
+        free(floatsounddataOutput);
+        free(floatsounddata);
+        free(shortsounddataOutput);
+    }
 }
 
 //
@@ -220,19 +236,7 @@ int I_StartSound(int id,
     lumpdata = malloc(lumplength);
     W_ReadLump(sfxlumpnum,lumpdata);
     memmove(sampdata,lumpdata + 8,sampLength);
-    unsigned int realvol = 100 * (vol / 127);
-    char *expandedSampleData = calloc(1, (lumplength) * 4);
-    char *sfxdata = lumpdata;
-    for (int sampleByte = 0; sampleByte < lumplength; sampleByte++)
-    {
-        expandedSampleData[sampleByte * 4] = sfxdata[sampleByte];
-        expandedSampleData[sampleByte * 4 + 1] = sfxdata[sampleByte + 1] / 4;
-        expandedSampleData[sampleByte * 4 + 2] = sfxdata[sampleByte + 2] / 4;
-        expandedSampleData[sampleByte * 4 + 3] = sfxdata[sampleByte + 3] / 4;
-    }
-    audioIo->SetupPlayback(audioIo, outputToUse, realvol, EfiAudioIoFreq44kHz, EfiAudioIoBits16, 2);
-    audioIo->StartPlaybackAsync(audioIo, sfxdata, lumplength * 4, 8 * 4, I_FinishedSound, (void*)calldata); // Blast it out unprocessed.
-    return 0;
+    unsigned int realvol = 100 * (fabs(vol) / 127);
     S_sfx[id].data = getsfx(S_sfx[id].name, length);
     EFI_STATUS stats;
     if (audioIo)
@@ -243,17 +247,24 @@ int I_StartSound(int id,
             audioIo->SetupPlayback(audioIo, outputToUse, realvol, EfiAudioIoFreq44kHz, EfiAudioIoBits16, 2);
         if (soundFreq == 44100)
         {
-            // Expand the sample data.
-            char *expandedSampleData = calloc(1, (sampLength) * 4);
-            char *sfxdata = sampdata;
-            for (int sampleByte = 0; sampleByte < sampLength; sampleByte++)
+            src_short_to_float_array(sampdata,floatsounddata,sampLength / sizeof(short));
+            SRC_DATA data;
+            memset(&data,0,sizeof(data));
+            data.data_in = floatsounddata;
+            data.data_out = floatsounddataOutput;
+            data.input_frames = sampLength / sizeof(short);
+            data.output_frames = data.input_frames * 4;
+            data.src_ratio = 44100 / 11025;
+            int convres = src_simple(&data,SRC_SINC_FASTEST,1);
+            if (convres != 0)
             {
-                expandedSampleData[sampleByte * 4] =
-                expandedSampleData[sampleByte * 4 + 1] =
-                expandedSampleData[sampleByte * 4 + 2] =
-                expandedSampleData[sampleByte * 4 + 3] = sfxdata[sampleByte];
+                printf("Sample rate conversion failed: %s\n",src_strerror(convres));
+                free(lumpdata);
+                free(sampdata);
+                return;
             }
-            stats = audioIo->StartPlaybackAsync(audioIo, expandedSampleData, sampLength * 4, 0, I_FinishedSound, (void*)calldata); // Blast it out processed.
+            src_float_to_short_array(floatsounddataOutput,shortsounddataOutput,data.output_frames_gen);
+            stats = audioIo->StartPlaybackAsync(audioIo, shortsounddataOutput, data.output_frames_gen, 0, I_FinishedSound, (void*)calldata); // Blast it out processed.
             if (EFI_ERROR(stats)) printf("Failed to play sound.\n");
         }
         else
