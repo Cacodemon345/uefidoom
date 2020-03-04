@@ -13,6 +13,7 @@
 #include <Protocol/SimpleTextInEx.h>
 #include <Protocol/SimplePointer.h>
 #include <Library/IoLib.h>
+#include <Library/UefiLib.h>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -225,7 +226,8 @@ void I_InitGraphics (void)
 			{
 				for (int HandleCountIndex = 0; HandleCountIndex < count; HandleCountIndex++)
 				{
-					if (EFI_ERROR(gBS->HandleProtocol(handles[HandleCountIndex],&gEfiSimplePointerProtocolGuid,(void**)&gMouseProtocol)))
+					status = gBS->HandleProtocol(handles[HandleCountIndex],&gEfiSimplePointerProtocolGuid,(void**)&gMouseProtocol);
+					if (EFI_ERROR(status))
 					{
 						continue;
 					}
@@ -235,6 +237,7 @@ void I_InitGraphics (void)
 			else printf("Failed to initialize mouse pointer.\n");
 		}
 	}
+	if (EFI_ERROR(status)) printf("Failed to initialize mouse pointer.\n");
 	status = gBS->HandleProtocol(gST->ConsoleInHandle,&gEfiSimpleTextInputExProtocolGuid,(void**) &gInputEx);
 	if (EFI_ERROR(status)) printf("Failed to initialize Extended Input protocol.\n");
 	
@@ -255,11 +258,11 @@ void I_InitGraphics (void)
 		}
 	}*/
 	mode = gGOP->Mode;
-	/*status = gGOP->SetMode(gGOP, 0);
+	status = gGOP->SetMode(gGOP, 0);
 	if (EFI_ERROR(status))
 	{
 		printf("GOP mode not set; using native console mode\n");
-	}*/
+	}
 	
 	// Calculate frame origin in current display mode
 	frameWidth = SCREENWIDTH * FRAME_SCALE;
@@ -511,29 +514,29 @@ void I_StartTic (void)
 	//IoWrite8(0x60,1 | (1 << 6));
 	EFI_STATUS status = EFI_SUCCESS;
 	EFI_INPUT_KEY inputKey;
-	char scancode;
 	while (1)
 	{
-		/*UINT8 statreg = IoRead8(0x64);
-		if (statreg & 1) scancode = IoRead8(0x60);
-		if (scancode)
-		if (scancode & 0x80)
+		event_t event;
+		if (gMouseProtocol)
 		{
-			event_t event1;
-			event1.type = ev_keyup;
-			event1.data1 = I_ScanCode2DoomCode(scancode & 0x7F);
-			D_PostEvent(event1);
+			EFI_SIMPLE_POINTER_STATE state;
+			status = gMouseProtocol->GetState(gMouseProtocol,&state);
+			if (EFI_ERROR(status))
+			{
+			
+			}
+			else
+			{
+				//AsciiPrint("Mouse delta X: %d, Mouse delta Y: %d",state.RelativeMovementX,state.RelativeMovementY);
+				event.type = ev_mouse;
+				event.data1  = (state.LeftButton == 1);
+				event.data1 |= (state.RightButton == 1 ? 2 : 0);
+				event.data2 = state.RelativeMovementX << 2;
+				event.data3 = state.RelativeMovementY << 2;
+				D_PostEvent(&event);
+			}
 		}
-		else
-		{
-			event_t event2;
-			event2.type = ev_keydown;
-			event2.data1 = I_ScanCode2DoomCode(scancode);
-			D_PostEvent(event2);
-		}*/
-		
-		//int cmdbyte = IoRead8(0x60);
-		//scancode = IoRead8(0x64);
+
 		status = gST->ConIn->ReadKeyStroke(gST->ConIn, &inputKey);
 		if (status == EFI_NOT_READY)
 		{
@@ -546,32 +549,11 @@ void I_StartTic (void)
 			break;
 		}
 		
-		event_t event;
 
-		// Post both pressed and released events
+		// Post pressed event (handle released event later).
 		event.type = ev_keydown;
 		event.data1 = xlatekey(&inputKey);
 		D_PostEvent(&event);
-		
-		if (gMouseProtocol)
-		{
-			EFI_SIMPLE_POINTER_STATE state;
-			EFI_STATUS status = gMouseProtocol->GetState(gMouseProtocol,&state);
-			if (EFI_ERROR(status))
-			{
-			
-			}
-			else
-			{
-				event_t event;
-				event.type = ev_mouse;
-				event.data1  = (state.LeftButton == 1);
-				event.data1 |= (state.RightButton == 1 ? 2 : 0);
-				event.data2 = state.RelativeMovementX << 2;
-				event.data3 = state.RelativeMovementY << 2;
-				D_PostEvent(&event);
-			}
-		}
 	}
 }
 

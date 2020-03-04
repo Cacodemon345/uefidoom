@@ -106,5 +106,5 @@ z_zone.c
 
 [BuildOptions]
     *:*_*_*_CC_FLAGS      = -DNORMALUNIX
-    MSFT:*_*_*_CC_FLAGS      = -DNORMALUNIX /W2 /WX- /WL
+    MSFT:*_*_*_CC_FLAGS      = -DNORMALUNIX /W2 /WX- /WL /FAs
 

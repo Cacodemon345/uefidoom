@@ -87,7 +87,7 @@ int  I_GetTime (void)
     return newtics;
 }
 int nano100ticks = 0;
-void I_TickTime(IN EFI_EVENT Event, IN VOID *Context)
+void EFIAPI I_TickTime(IN EFI_EVENT Event, IN VOID *Context)
 {
     nano100ticks++;
     AsciiPrint("Ticks passed: %d",nano100ticks);

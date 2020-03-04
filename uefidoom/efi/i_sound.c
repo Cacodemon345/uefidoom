@@ -125,6 +125,7 @@ void I_ShutdownSound(void)
 {
     if (audioIo && soundinit)
     {
+        soundinit = false;
         audioIo->StopPlayback(audioIo);
         free(floatsounddataOutput);
         free(floatsounddata);
@@ -226,7 +227,7 @@ int I_StartSound(int id,
                  int priority)
 {
     if (!outputFound) return 0;
-    int *length;
+    int *length = 0;
     char* sampdata;
     char* lumpdata;
     int sfxlumpnum = I_GetSfxLumpNum(&S_sfx[id]);
