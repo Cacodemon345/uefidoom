@@ -531,8 +531,8 @@ void I_StartTic (void)
 				event.type = ev_mouse;
 				event.data1  = (state.LeftButton == 1);
 				event.data1 |= (state.RightButton == 1 ? 2 : 0);
-				event.data2 = state.RelativeMovementX << 2;
-				event.data3 = state.RelativeMovementY << 2;
+				event.data2 = state.RelativeMovementX * 4;
+				event.data3 = -state.RelativeMovementY * 4;
 				D_PostEvent(&event);
 			}
 		}

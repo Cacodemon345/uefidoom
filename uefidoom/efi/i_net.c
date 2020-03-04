@@ -9,7 +9,7 @@ void I_InitNetwork (void)
     int			i;
     int			p;
 	
-    doomcom = malloc (sizeof (*doomcom) );
+    doomcom = (doomcom_t*)malloc (sizeof (*doomcom) );
     memset (doomcom, 0, sizeof(*doomcom) );
     
     // set up for network

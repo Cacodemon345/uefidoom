@@ -73,6 +73,7 @@ static const char rcsid[] = "$Id: d_main.c,v 1.8 1997/02/03 22:45:09 b1 Exp $";
 
 #include "p_setup.h"
 #include "r_local.h"
+#include <Library/TimerLib.h>
 
 #include "d_main.h"
 #define R_OK 0
@@ -354,6 +355,7 @@ void D_DoomLoop(void)
 		// process one or more tics
 		if (singletics)
 		{
+			//NanoSecondDelay((1000 * 1000 * 1000)/TICRATE);
 			usleep((1000 * 1000) / 35);
 			I_StartTic();
 			D_ProcessEvents();

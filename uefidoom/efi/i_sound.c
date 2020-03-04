@@ -208,7 +208,7 @@ getsfx(char *sfxname,
     Z_Free(sfx);
 
     // Preserve padded length.
-    *len = paddedsize;
+    if (len) *len = paddedsize;
 
     // Return allocated padded data.
     return (void *)(paddedsfx + 8);
@@ -242,37 +242,26 @@ int I_StartSound(int id,
     EFI_STATUS stats;
     if (audioIo)
     {
-        if (soundFreq == 11025)
-            audioIo->SetupPlayback(audioIo, outputToUse, realvol, EfiAudioIoFreq11kHz, EfiAudioIoBits16, 2);
-        else
-            audioIo->SetupPlayback(audioIo, outputToUse, realvol, EfiAudioIoFreq44kHz, EfiAudioIoBits16, 2);
-        if (soundFreq == 44100)
+        audioIo->SetupPlayback(audioIo, outputToUse, realvol, EfiAudioIoFreq44kHz, EfiAudioIoBits16, 2);
+        src_short_to_float_array(sampdata,floatsounddata,sampLength / sizeof(short));
+        SRC_DATA data;
+        memset(&data,0,sizeof(SRC_DATA));
+        data.data_in = floatsounddata;
+        data.data_out = floatsounddataOutput;
+        data.input_frames = sampLength / sizeof(short);
+        data.output_frames = data.input_frames * 4;
+        data.src_ratio = 44100 / 11025;
+        int convres = src_simple(&data,SRC_SINC_MEDIUM_QUALITY,1);
+        if (convres != 0)
         {
-            src_short_to_float_array(sampdata,floatsounddata,sampLength / sizeof(short));
-            SRC_DATA data;
-            memset(&data,0,sizeof(data));
-            data.data_in = floatsounddata;
-            data.data_out = floatsounddataOutput;
-            data.input_frames = sampLength / sizeof(short);
-            data.output_frames = data.input_frames * 4;
-            data.src_ratio = 44100 / 11025;
-            int convres = src_simple(&data,SRC_SINC_FASTEST,1);
-            if (convres != 0)
-            {
-                printf("Sample rate conversion failed: %s\n",src_strerror(convres));
-                free(lumpdata);
-                free(sampdata);
-                return;
-            }
-            src_float_to_short_array(floatsounddataOutput,shortsounddataOutput,data.output_frames_gen);
-            stats = audioIo->StartPlaybackAsync(audioIo, shortsounddataOutput, data.output_frames_gen, 0, I_FinishedSound, (void*)calldata); // Blast it out processed.
-            if (EFI_ERROR(stats)) printf("Failed to play sound.\n");
+            printf("Sample rate conversion failed: %s\n",src_strerror(convres));
+            free(lumpdata);
+            free(sampdata);
+            return 0;
         }
-        else
-        {
-            stats = audioIo->StartPlaybackAsync(audioIo, sampdata, sampLength, 0, I_FinishedSound, (void*)calldata); // Blast it out unprocessed.
-            if (EFI_ERROR(stats)) printf("Failed to play sound.\n");
-        }
+        src_float_to_short_array(floatsounddataOutput,shortsounddataOutput,data.output_frames_gen);
+        stats = audioIo->StartPlaybackAsync(audioIo, shortsounddataOutput, data.output_frames_gen, 0, I_FinishedSound, (void*)calldata); // Blast it out processed.
+        if (EFI_ERROR(stats)) printf("Failed to play sound.\n");
     }
     return id;
 }
