@@ -413,7 +413,7 @@ void G_BuildTiccmd (ticcmd_t* cmd)
     if (strafe) 
 	side += mousex*2; 
     else 
-    cmd->angleturn -= mousex * 2; 
+    cmd->angleturn -= mousex / 4; //Descale horizontal mouse delta.
 	//cmd->angleturn -= mousex*0x8; // Commented out as this causes the "Mouse sensitivity too high" bug from the KolibriOS Quake 1 port.
 
     mousex = mousey = 0; 
