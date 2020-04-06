@@ -66,6 +66,6 @@
 
   CacheMaintenanceLib|MdePkg/Library/BaseCacheMaintenanceLib/BaseCacheMaintenanceLib.inf
 [Components]
-DoomPkg/uefidoom/doom.inf
+uefidoom/uefidoom/doom.inf
 
 !include StdLib/StdLib.inc
