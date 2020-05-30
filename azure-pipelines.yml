@@ -1,9 +1,6 @@
-# Starter pipeline
-- task: DownloadGitHubRelease@0
-  inputs:
-    userRepository: 'https://github.com/tianocore/edk2'
-    defaultVersionType: 'latest'
-    downloadPath: '$(System.ArtifactsDirectory)'
+
+  
+
 # Start with a minimal pipeline that you can customize to build and deploy your code.
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
