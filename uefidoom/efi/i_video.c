@@ -2,7 +2,8 @@
 #include <v_video.h>
 #include <d_event.h>
 #include <doomdef.h>
-
+#define STB_IMAGE_RESIZE_IMPLEMENTATION 1
+#include "stb_image_resize.h"
 // Efi stuff
 #include <Uefi.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -300,11 +301,10 @@ void MakeFrame (void)
 {
 	UINTN i;
 	UINTN j;
-
+	UINTN linedest;
 	// Each pixel in screen buffer is a pallette index
 	byte* srcLine = screens[0];
 	EFI_GRAPHICS_OUTPUT_BLT_PIXEL* dstLine = frameBuffer;
-	UINTN linedest = 0;
 	for (i = 0; i < SCREENHEIGHT; ++i)
 	{
 		// Convert source screen line into framebuffer pixels
@@ -326,7 +326,7 @@ void MakeFrame (void)
 			dstLine += frameWidth;
 		}
 	}
-
+	
 }
 
 void I_FinishUpdate (void)

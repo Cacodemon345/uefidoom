@@ -72,13 +72,17 @@ int  I_GetTime (void)
     memset(time,0,sizeof(EFI_TIME));
     EFI_TIME_CAPABILITIES *timecaps = malloc(sizeof(EFI_TIME_CAPABILITIES));
     memset(timecaps,0,sizeof(EFI_TIME_CAPABILITIES));
-    if (gST) gST->RuntimeServices->GetTime(time,timecaps);    
-    if (time != NULL)
+    EFI_STATUS status = EFI_SUCCESS;
+    if (gST) status = gST->RuntimeServices->GetTime(time,timecaps);    
+    if (!EFI_ERROR (status))
     {
         tp.tv_sec = time->Second;
         tp.tv_usec = time->Nanosecond / 1000;
     }
-    else gettimeofday(&tp, NULL);
+    else 
+    {
+        gettimeofday(&tp, NULL);
+    }
     if (!basetime)
 	basetime = tp.tv_sec;
     newtics = (tp.tv_sec-basetime)*TICRATE + tp.tv_usec*TICRATE/1000000;

@@ -91,26 +91,51 @@ void I_InitSound()
                 if (outputPorts[o].SupportedFreqs & EfiAudioIoFreq11kHz) printf("%d, ",11025);
                 if (outputPorts[o].SupportedFreqs & EfiAudioIoFreq22kHz) printf("%d, ",22050);
                 if (outputPorts[o].SupportedFreqs & EfiAudioIoFreq44kHz) printf("%d, ",44100);
-                if (outputPorts[o].SupportedFreqs & EfiAudioIoFreq48kHz) printf("%d\n",48000);
+                if (outputPorts[o].SupportedFreqs & EfiAudioIoFreq48kHz) printf("%d",48000);
+                printf("\n");
+                Print(L"Supported bit formats: ");
+                if (outputPorts[o].SupportedBits & EfiAudioIoBits8) printf ("%d, ", 8);
+                if (outputPorts[o].SupportedBits & EfiAudioIoBits16) printf ("%d, ", 16);
+                if (outputPorts[o].SupportedBits & EfiAudioIoBits20) printf ("%d, ", 20);
+                if (outputPorts[o].SupportedBits & EfiAudioIoBits24) printf ("%d, ", 24);
+                if (outputPorts[o].SupportedBits & EfiAudioIoBits32) printf ("%d, ", 32);
+                printf("\n");
                 if (outputPorts[o].Device == EfiAudioIoDeviceLine
                     || outputPorts[o].Device == EfiAudioIoDeviceSpeaker)
                 if (outputFound != true)
                 {
-                        if (outputPorts[o].SupportedFreqs & EfiAudioIoFreq11kHz) soundFreq = 11025;
-                        else soundFreq = 44100;
-                        
-                        outputToUse = o;
-                        outputFound = true;
-                        printf("Selected output.\n");
+                    if (outputPorts[o].SupportedFreqs & EfiAudioIoFreq11kHz) soundFreq = 11025;
+                    else soundFreq = 44100;
+                    
+                    outputToUse = o;
+                    outputFound = true;
+                    printf("Selected output.\n");
+                    getchar();
                 }
+            }
+            if (!outputFound) while (1)
+            {
+                printf("Preferred output not found. Please select a output: ");
+                int selection;
+                int res = scanf("%d",&selection);
+                if (res == 0 ||
+                    res == EOF)
+                    {
+                        printf("Bad input. Try again");
+                    }
+                else
+                {
+                    outputFound = true;
+                    outputToUse = selection;
+                    break;
+                }                
             }
         }
     }
     else
     {
-        printf("Sound not found.\n");
-    }
-    
+        printf("I_InitSound: Sound not found.\n");
+    }    
 }
 
 void I_UpdateSound(void)
@@ -219,6 +244,11 @@ void I_FinishedSound(IN EFI_AUDIO_IO_PROTOCOL *AudioIo, IN VOID *Context)
 {
 
 }
+
+double lerp(double v0, double v1, double t) {
+  return (1 - t) * v0 + t * v1;
+}
+
 // Starts a sound in a particular sound channel.
 int I_StartSound(int id,
                  int vol,
@@ -233,7 +263,7 @@ int I_StartSound(int id,
     int sfxlumpnum = I_GetSfxLumpNum(&S_sfx[id]);
     int lumplength = W_LumpLength(sfxlumpnum);
     int sampLength = lumplength - 8;
-    sampdata = malloc(lumplength - 8);
+    sampdata = malloc((lumplength - 8) + 2);
     lumpdata = malloc(lumplength);
     W_ReadLump(sfxlumpnum,lumpdata);
     memmove(sampdata,lumpdata + 8,sampLength);
@@ -243,7 +273,15 @@ int I_StartSound(int id,
     if (audioIo)
     {
         audioIo->SetupPlayback(audioIo, outputToUse, realvol, EfiAudioIoFreq44kHz, EfiAudioIoBits16, 2);
-        src_short_to_float_array(sampdata,floatsounddata,sampLength / sizeof(short));
+        char* newSampData = (char*)malloc(sampLength * 4);
+        for (int i = 0; i < sampLength; i++)
+        {
+            newSampData[i * 4] = sampdata[i];
+            newSampData[i * 4 + 1] = lerp(sampdata[i],sampdata[i + 1],0.25);
+            newSampData[i * 4 + 2] = lerp(sampdata[i],sampdata[i + 1], 0.50);
+            newSampData[i * 4 + 3] = lerp(sampdata[i],sampdata[i + 3], 0.75);
+        }
+        /*src_short_to_float_array(sampdata,floatsounddata,sampLength / sizeof(short));
         SRC_DATA data;
         memset(&data,0,sizeof(SRC_DATA));
         data.data_in = floatsounddata;
@@ -259,10 +297,12 @@ int I_StartSound(int id,
             free(sampdata);
             return 0;
         }
-        src_float_to_short_array(floatsounddataOutput,shortsounddataOutput,data.output_frames_gen);
-        stats = audioIo->StartPlaybackAsync(audioIo, shortsounddataOutput, data.output_frames_gen, 0, I_FinishedSound, (void*)calldata); // Blast it out processed.
+        src_float_to_short_array(floatsounddataOutput,shortsounddataOutput,data.output_frames_gen);*/
+        stats = audioIo->StartPlaybackAsync(audioIo, newSampData, sampLength * 4, 0, I_FinishedSound, (void*)calldata); // Blast it out processed.
         if (EFI_ERROR(stats)) printf("Failed to play sound.\n");
-    }
+    }        
+    free(lumpdata);     
+    free(sampdata);
     return id;
 }
 
