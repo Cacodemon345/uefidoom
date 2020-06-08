@@ -58,7 +58,7 @@ void I_InitSound()
     soundinit = true;
     floatsounddata = calloc(MAX_UINT16,sizeof(short));
     floatsounddataOutput = calloc(MAX_UINT16,sizeof(short) * 2);
-    shortsounddataOutput = calloc(MAX_UINT16,1);
+    shortsounddataOutput = calloc(MAX_UINT16,sizeof(short));
     UINTN HandlesCount = 0;
     EFI_HANDLE* handles = malloc(sizeof(EFI_HANDLE) * 256);
     EFI_STATUS status1 = gBS->LocateHandleBuffer(ByProtocol,&gEfiAudioIoProtocolGuid,NULL,&HandlesCount,&handles);
@@ -83,6 +83,7 @@ void I_InitSound()
             //ASSERT_EFI_ERROR(status1);
             if (EFI_ERROR(status1))
                 continue;
+
             for (int o = 0; o < outputCount; o++)
             {
                 Print(L"Device Num: %d, output location: %s, output surface: %s, output device: %s\n",
@@ -91,14 +92,16 @@ void I_InitSound()
                 if (outputPorts[o].SupportedFreqs & EfiAudioIoFreq11kHz) printf("%d, ",11025);
                 if (outputPorts[o].SupportedFreqs & EfiAudioIoFreq22kHz) printf("%d, ",22050);
                 if (outputPorts[o].SupportedFreqs & EfiAudioIoFreq44kHz) printf("%d, ",44100);
-                if (outputPorts[o].SupportedFreqs & EfiAudioIoFreq48kHz) printf("%d\n",48000);
+                if (outputPorts[o].SupportedFreqs & EfiAudioIoFreq48kHz) printf("%d",48000);
+                printf("\n");
+                Print(L"");
                 if (outputPorts[o].Device == EfiAudioIoDeviceLine
                     || outputPorts[o].Device == EfiAudioIoDeviceSpeaker)
                 if (outputFound != true)
                 {
                         if (outputPorts[o].SupportedFreqs & EfiAudioIoFreq11kHz) soundFreq = 11025;
                         else soundFreq = 44100;
-                        
+                        getchar();
                         outputToUse = o;
                         outputFound = true;
                         printf("Selected output.\n");
@@ -219,6 +222,9 @@ void I_FinishedSound(IN EFI_AUDIO_IO_PROTOCOL *AudioIo, IN VOID *Context)
 {
 
 }
+float lerp(float v0, float v1, float t) {
+  return (1 - t) * v0 + t * v1;
+}
 // Starts a sound in a particular sound channel.
 int I_StartSound(int id,
                  int vol,
@@ -237,12 +243,13 @@ int I_StartSound(int id,
     lumpdata = malloc(lumplength);
     W_ReadLump(sfxlumpnum,lumpdata);
     memmove(sampdata,lumpdata + 8,sampLength);
-    unsigned int realvol = 100 * (fabs(vol) / 127);
+    unsigned int realvol = 100 * (fabs(vol) / 127.);
     S_sfx[id].data = getsfx(S_sfx[id].name, length);
     EFI_STATUS stats;
     if (audioIo)
     {
-        audioIo->SetupPlayback(audioIo, outputToUse, realvol, EfiAudioIoFreq44kHz, EfiAudioIoBits16, 2);
+        EFI_STATUS res = audioIo->SetupPlayback(audioIo, outputToUse, realvol, EfiAudioIoFreq44kHz, EfiAudioIoBits8, 2);
+        if (EFI_ERROR(res)) audioIo->SetupPlayback(audioIo, outputToUse, realvol, EfiAudioIoFreq44kHz, EfiAudioIoBits16, 2);
         src_short_to_float_array(sampdata,floatsounddata,sampLength / sizeof(short));
         SRC_DATA data;
         memset(&data,0,sizeof(SRC_DATA));
@@ -260,9 +267,15 @@ int I_StartSound(int id,
             return 0;
         }
         src_float_to_short_array(floatsounddataOutput,shortsounddataOutput,data.output_frames_gen);
-        stats = audioIo->StartPlaybackAsync(audioIo, shortsounddataOutput, data.output_frames_gen, 0, I_FinishedSound, (void*)calldata); // Blast it out processed.
+        short* outputStereo = calloc(MAX_UINT16,sizeof(short));
+        for (int i = 0; i < data.output_frames_gen; i++)
+        {
+            outputStereo[i * 2] = outputStereo[i * 2 + 1] = shortsounddataOutput[i];
+        }
+        stats = audioIo->StartPlaybackAsync(audioIo, outputStereo, data.output_frames_gen * 2, 0, &I_FinishedSound, NULL); // Blast it out processed.
         if (EFI_ERROR(stats)) printf("Failed to play sound.\n");
     }
+    free(sampdata);
     return id;
 }
 

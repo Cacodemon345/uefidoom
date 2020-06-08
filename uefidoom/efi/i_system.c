@@ -72,8 +72,9 @@ int  I_GetTime (void)
     memset(time,0,sizeof(EFI_TIME));
     EFI_TIME_CAPABILITIES *timecaps = malloc(sizeof(EFI_TIME_CAPABILITIES));
     memset(timecaps,0,sizeof(EFI_TIME_CAPABILITIES));
-    if (gST) gST->RuntimeServices->GetTime(time,timecaps);    
-    if (time != NULL)
+    EFI_STATUS status;
+    if (gST) status = gST->RuntimeServices->GetTime(time,timecaps);    
+    if (!EFI_ERROR (status))
     {
         tp.tv_sec = time->Second;
         tp.tv_usec = time->Nanosecond / 1000;
@@ -104,7 +105,7 @@ void I_Init (void)
     gBS->SetTimer(&timerEvent,TimerPeriodic,1);
     //  I_InitGraphics();
 }
-
+#include "w_wad.h"
 //
 // I_Quit
 //
@@ -115,6 +116,27 @@ void I_Quit (void)
     I_ShutdownMusic();
     M_SaveDefaults ();
     I_ShutdownGraphics();
+
+    int lump = W_CheckNumForName("ENDOOM");
+    if (lump != -1)
+    {
+        char* allocChar = malloc(W_LumpLength(lump));
+        W_ReadLump(lump, allocChar);
+        for (int vgaline = 0; vgaline < 80; vgaline++)
+        {
+            for (int vgacol = 0; vgacol < 50; vgacol += 2)
+            {
+                unsigned char ascChar = allocChar[vgaline * 50 + vgacol];
+                unsigned char attrChar = allocChar[vgaline * 50 + (vgacol + 1)];
+                if (ascChar == (unsigned char)196)
+                {
+                    ascChar = '-';
+                }
+                gST->ConOut->SetAttribute(gST->ConOut,attrChar & 0x7F);
+                gST->ConOut->OutputString(gST->ConOut, (wchar_t[]){ascChar,0});
+            }
+        }
+    }
 
     exit(0);
 }
