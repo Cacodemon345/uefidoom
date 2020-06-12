@@ -72,11 +72,7 @@ int  I_GetTime (void)
     memset(time,0,sizeof(EFI_TIME));
     EFI_TIME_CAPABILITIES *timecaps = malloc(sizeof(EFI_TIME_CAPABILITIES));
     memset(timecaps,0,sizeof(EFI_TIME_CAPABILITIES));
-<<<<<<< HEAD
-    EFI_STATUS status = EFI_SUCCESS;
-=======
     EFI_STATUS status;
->>>>>>> someimprovements
     if (gST) status = gST->RuntimeServices->GetTime(time,timecaps);    
     if (!EFI_ERROR (status))
     {
