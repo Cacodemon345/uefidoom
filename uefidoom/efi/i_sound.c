@@ -32,6 +32,7 @@
 #include <wchar.h>
 
 #include "sound/common.h"
+#include "sounds.h"
 #include "doomdef.h"
 #include "Uefi.h"
 #include "stdbool.h"
@@ -39,6 +40,7 @@
 #include <Include/Protocol/AudioIo.h>
 #include <Library/UefiLib.h>
 #include <Library/DevicePathLib.h>
+
 EFI_AUDIO_IO_PROTOCOL *audioIo;
 EFI_AUDIO_IO_PROTOCOL_PORT *outputPorts = NULL;
 EFI_DEVICE_PATH_PROTOCOL *DevicePath = NULL;
@@ -52,7 +54,9 @@ STATIC CHAR16 *Surfaces[EfiAudioIoSurfaceMaximum] = { L"external", L"internal", 
 float* floatsounddata = NULL;
 float* floatsounddataOutput = NULL;
 short* shortsounddataOutput = NULL;
+int sndsfxLength[109];
 bool soundinit = false;
+
 void I_InitSound()
 {
     soundinit = true;
@@ -62,6 +66,7 @@ void I_InitSound()
     UINTN HandlesCount = 0;
     EFI_HANDLE* handles = malloc(sizeof(EFI_HANDLE) * 256);
     EFI_STATUS status1 = gBS->LocateHandleBuffer(ByProtocol,&gEfiAudioIoProtocolGuid,NULL,&HandlesCount,&handles);
+    memset(&sndsfxLength[0],0,sizeof(sndsfxLength));
     if (!EFI_ERROR(status1))
     {
         for (UINTN h = 0; h < HandlesCount; h++) 
@@ -137,6 +142,7 @@ void I_InitSound()
     {
         printf("I_InitSound: Sound not found.\n");
     }    
+
 }
 
 void I_UpdateSound(void)
@@ -250,6 +256,8 @@ double lerp(double v0, double v1, double t) {
   return (1 - t) * v0 + t * v1;
 }
 
+
+
 // Starts a sound in a particular sound channel.
 int I_StartSound(int id,
                  int vol,
@@ -275,29 +283,34 @@ int I_StartSound(int id,
     {
         EFI_STATUS res = audioIo->SetupPlayback(audioIo, outputToUse, realvol, EfiAudioIoFreq44kHz, EfiAudioIoBits8, 2);
         if (EFI_ERROR(res)) audioIo->SetupPlayback(audioIo, outputToUse, realvol, EfiAudioIoFreq44kHz, EfiAudioIoBits16, 2);
-        src_short_to_float_array(sampdata,floatsounddata,sampLength / sizeof(short));
-        SRC_DATA data;
-        memset(&data,0,sizeof(SRC_DATA));
-        data.data_in = floatsounddata;
-        data.data_out = floatsounddataOutput;
-        data.input_frames = sampLength / sizeof(short);
-        data.output_frames = data.input_frames * 4;
-        data.src_ratio = 44100 / 11025;
-        int convres = src_simple(&data,SRC_SINC_MEDIUM_QUALITY,1);
-        if (convres != 0)
+        if (sndsfxLength[id] == 0)
         {
-            printf("Sample rate conversion failed: %s\n",src_strerror(convres));
-            free(lumpdata);
-            free(sampdata);
-            return 0;
+            src_short_to_float_array(sampdata,floatsounddata,sampLength / sizeof(short));
+            SRC_DATA data;
+            memset(&data,0,sizeof(SRC_DATA));
+            data.data_in = floatsounddata;
+            data.data_out = floatsounddataOutput;
+            data.input_frames = sampLength / sizeof(short);
+            data.output_frames = data.input_frames * 4;
+            data.src_ratio = 44100 / 11025;
+            int convres = src_simple(&data,SRC_SINC_BEST_QUALITY,1);
+            if (convres != 0)
+            {
+                printf("Sample rate conversion failed: %s\n",src_strerror(convres));
+                free(lumpdata);
+                free(sampdata);
+                return 0;
+            }
+            src_float_to_short_array(floatsounddataOutput,shortsounddataOutput,data.output_frames_gen);
+            short* outputStereo = calloc(MAX_UINT16,sizeof(short));
+            for (int i = 0; i < data.output_frames_gen; i++)
+            {
+                outputStereo[i * 2] = outputStereo[i * 2 + 1] = shortsounddataOutput[i];
+            }
+            S_sfx[id].data = outputStereo;
+            sndsfxLength[id] = data.output_frames_gen * 2;
         }
-        src_float_to_short_array(floatsounddataOutput,shortsounddataOutput,data.output_frames_gen);
-        short* outputStereo = calloc(MAX_UINT16,sizeof(short));
-        for (int i = 0; i < data.output_frames_gen; i++)
-        {
-            outputStereo[i * 2] = outputStereo[i * 2 + 1] = shortsounddataOutput[i];
-        }
-        stats = audioIo->StartPlaybackAsync(audioIo, outputStereo, data.output_frames_gen * 2, 0, &I_FinishedSound, NULL); // Blast it out processed.
+        stats = audioIo->StartPlaybackAsync(audioIo, S_sfx[id].data, sndsfxLength[id], 0, &I_FinishedSound, NULL); // Blast it out processed.
         if (EFI_ERROR(stats)) printf("Failed to play sound.\n");
     }
     free(sampdata);
