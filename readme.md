@@ -1,7 +1,7 @@
 # Cacodemon345's UEFI-DOOM (forked from warfish's DOOM repo)
 
 A port of DOOM to UEFI systems.
-Tested with: QEMU with OVMF, MSI B150M-PRO-VD UEFI firmware, a HP Pavilion Coffee Lake laptop.
+Tested with: QEMU with OVMF, MSI B150M-PRO-VD UEFI firmware, a HP Pavilion 8th Gen laptop.
 
 # Building
 Prerequisites:
