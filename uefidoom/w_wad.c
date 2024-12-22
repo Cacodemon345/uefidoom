@@ -35,7 +35,7 @@ rcsid[] = "$Id: w_wad.c,v 1.5 1997/02/03 16:47:57 b1 Exp $";
 #include <stdlib.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-//#include <alloca.h>
+#include <alloca.h>
 #define O_BINARY		0
 //#endif
 
@@ -48,11 +48,6 @@ rcsid[] = "$Id: w_wad.c,v 1.5 1997/02/03 16:47:57 b1 Exp $";
 #pragma implementation "w_wad.h"
 #endif
 #include "w_wad.h"
-
-void* alloca(size_t size)
-{
-	return malloc(size);
-}
 
 
 
@@ -199,7 +194,7 @@ void W_AddFile (char *filename)
 	header.numlumps = LONG(header.numlumps);
 	header.infotableofs = LONG(header.infotableofs);
 	length = header.numlumps*sizeof(filelump_t);
-	fileinfo = malloc (length);
+	fileinfo = alloca (length);
 	lseek (handle, header.infotableofs, SEEK_SET);
 	read (handle, fileinfo, length);
 	numlumps += header.numlumps;
@@ -221,7 +216,7 @@ void W_AddFile (char *filename)
 	lump_p->handle = storehandle;
 	lump_p->position = LONG(fileinfo->filepos);
 	lump_p->size = LONG(fileinfo->size);
-	strncpy (lump_p->name, fileinfo->name, 8);
+	memcpy (lump_p->name, fileinfo->name, 8);
     }
 	
     if (reloadname)
@@ -256,7 +251,7 @@ void W_Reload (void)
     lumpcount = LONG(header.numlumps);
     header.infotableofs = LONG(header.infotableofs);
     length = lumpcount*sizeof(filelump_t);
-    fileinfo = malloc (length);
+    fileinfo = alloca (length);
     lseek (handle, header.infotableofs, SEEK_SET);
     read (handle, fileinfo, length);
     
@@ -362,6 +357,9 @@ int W_CheckNumForName (char* name)
     int		v1;
     int		v2;
     lumpinfo_t*	lump_p;
+
+    // initialize name8 with zeros
+    name8.x[0] = name8.x[1] = 0;
 
     // make the name into two integers for easy compares
     strncpy (name8.s,name,8);

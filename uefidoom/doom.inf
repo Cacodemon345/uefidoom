@@ -81,6 +81,9 @@ w_wad.c
 wi_stuff.c
 z_zone.c
 
+[Sources.X64]
+efi/chkstk.nasm | MSFT
+
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
@@ -107,4 +110,5 @@ z_zone.c
 [BuildOptions]
     *:*_*_*_CC_FLAGS      = -DNORMALUNIX
     MSFT:*_*_*_CC_FLAGS      = -DNORMALUNIX /W2 /WX- /WL /FAs
+    GCC:*_*_*_CC_FLAGS       = -fno-stack-clash-protection -Wno-error
 

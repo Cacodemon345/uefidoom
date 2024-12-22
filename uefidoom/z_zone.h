@@ -78,9 +78,9 @@ typedef struct memblock_s
 
 //#define Z_DEBUG
 
-#ifdef Z_DEBUG
 #include <Library/SerialPortLib.h>
 
+#ifdef Z_DEBUG
 void Z_FreeDebug(void* ptr, const char* file, int line);
 void* Z_MallocDebug(int size, int tag, void* ptr, const char* file, int line);
 
