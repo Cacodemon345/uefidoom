@@ -2,6 +2,7 @@
 #include <i_net.h>
 #include <m_argv.h>
 #include <doomstat.h>
+#include <stdlib.h>
 
 void I_InitNetwork (void)
 {

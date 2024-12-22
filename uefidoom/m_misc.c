@@ -392,8 +392,7 @@ void M_LoadDefaults (void)
 			if (!isstring)
 			    *defaults[i].location = parm;
 			else
-			    *defaults[i].location =
-				(int) newstring;
+			    *(char**)defaults[i].location = newstring;
 			break;
 		    }
 	    }

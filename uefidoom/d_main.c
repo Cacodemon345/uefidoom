@@ -672,7 +672,7 @@ void IdentifyVersion(void)
     }
 
 
-	Print(L"Game mode indeterminate.\n");
+	printf("Game mode indeterminate.\n");
 	gamemode = indetermined;
 
 	// We don't abort. Let's see what the PWAD contains.

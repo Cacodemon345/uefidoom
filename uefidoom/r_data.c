@@ -45,7 +45,7 @@ rcsid[] = "$Id: r_data.c,v 1.4 1997/02/03 16:47:55 b1 Exp $";
 #include "r_data.h"
 
 #include <stdint.h>
-#include <stdlib.h>
+#include <alloca.h>
 
 //
 // Graphics.
@@ -319,7 +319,7 @@ void R_GenerateLookup (int texnum)
     //  that are covered by more than one patch.
     // Fill in the lump / offset, so columns
     //  with only a single patch are all done.
-    patchcount = (byte *)calloc (texture->width, 1);
+    patchcount = (byte *)alloca (texture->width);
     memset (patchcount, 0, texture->width);
     patch = texture->patches;
 		
@@ -446,7 +446,7 @@ void R_InitTextures (void)
     names = W_CacheLumpName ("PNAMES", PU_STATIC);
     nummappatches = LONG ( *((int *)names) );
     name_p = names+4;
-    patchlookup = calloc (nummappatches*sizeof(*patchlookup), 1);
+    patchlookup = alloca (nummappatches*sizeof(*patchlookup));
   
     for (i=0 ; i<nummappatches ; i++)
     {
@@ -645,7 +645,7 @@ void R_InitColormaps (void)
     lump = W_GetNumForName("COLORMAP"); 
     length = W_LumpLength (lump) + 255; 
     colormaps = Z_Malloc (length, PU_STATIC, 0); 
-    colormaps = (byte *)( ((int)colormaps + 255)&~0xff); 
+    colormaps = (byte *)( ((size_t)colormaps + 255)&~(size_t)0xff); 
     W_ReadLump (lump,colormaps); 
 }
 
@@ -765,7 +765,7 @@ void R_PrecacheLevel (void)
 	return;
     
     // Precache flats.
-    flatpresent = calloc(numflats, 1);
+    flatpresent = alloca(numflats);
     memset (flatpresent,0,numflats);	
 
     for (i=0 ; i<numsectors ; i++)
@@ -787,7 +787,7 @@ void R_PrecacheLevel (void)
     }
     
     // Precache textures.
-    texturepresent = calloc(numtextures, 1);
+    texturepresent = alloca(numtextures);
     memset (texturepresent,0, numtextures);
 	
     for (i=0 ; i<numsides ; i++)
@@ -822,7 +822,7 @@ void R_PrecacheLevel (void)
     }
     
     // Precache sprites.
-    spritepresent = calloc(numsprites, 1);
+    spritepresent = alloca(numsprites);
     memset (spritepresent,0, numsprites);
 	
     for (th = thinkercap.next ; th != &thinkercap ; th=th->next)

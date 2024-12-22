@@ -1,6 +1,7 @@
 #include <i_video.h>
 #include <v_video.h>
 #include <d_event.h>
+#include <d_main.h>
 #include <doomdef.h>
 #define STB_IMAGE_RESIZE_IMPLEMENTATION 1
 #include "stb_image_resize.h"
@@ -40,6 +41,8 @@ static boolean getInput = true;
 static EFI_KEY_DATA keydata[4096];
 static unsigned int keycounter;
 #define FRAME_SCALE 2
+
+static int xlatekey(EFI_INPUT_KEY* efiKey);
 
 ////////////////////////////////////////////////////////////////////
 
